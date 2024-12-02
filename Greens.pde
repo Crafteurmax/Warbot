@@ -12,10 +12,8 @@ class GreenTeam extends Team {
   // coordinates of the 2 bases, chosen in the rectangle with corners
   // (0, 0) and (width/2, height-100)
   GreenTeam() {
-    // first base
-    base1 = new PVector(width/2 - 300, (height - 100)/2 - 150);
-    // second base
-    base2 = new PVector(width/2 - 300, (height - 100)/2 + 150);
+    base1 = new PVector(width/2 - 300, (height - 100)/2 - 150); // first base
+    base2 = new PVector(width/2 - 300, (height - 100)/2 + 150); // second base
   }  
 }
 
@@ -48,10 +46,8 @@ class GreenBase extends Base implements GreenRobot {
   // > called at the creation of the base
   //
   void setup() {
-    // creates a new harvester
-    newExplorer();
-    // 7 more harvesters to create
-    brain[5].z = 7;
+    newExplorer(); // creates a new harvester
+    brain[5].z = 7; // 7 more harvesters to create
   }
 
   //
@@ -67,42 +63,34 @@ class GreenBase extends Base implements GreenRobot {
     // creates new robots depending on energy and the state of brain[5]
     if ((brain[5].x > 0) && (energy >= 1000 + harvesterCost)) {
       // 1st priority = creates harvesters 
-      if (newHarvester())
-        brain[5].x--;
-    } else if ((brain[5].y > 0) && (energy >= 1000 + launcherCost)) {
+      if (newHarvester()) brain[5].x--;
+    } 
+    else if ((brain[5].y > 0) && (energy >= 1000 + launcherCost)) {
       // 2nd priority = creates rocket launchers 
-      if (newRocketLauncher())
-        brain[5].y--;
-    } else if ((brain[5].z > 0) && (energy >= 1000 + explorerCost)) {
+      if (newRocketLauncher()) brain[5].y--;
+    } 
+    else if ((brain[5].z > 0) && (energy >= 1000 + explorerCost)) {
       // 3rd priority = creates explorers 
-      if (newExplorer())
-        brain[5].z--;
-    } else if (energy > 12000) {
+      if (newExplorer()) brain[5].z--;
+    } 
+    else if (energy > 12000) {
       // if no robot in the pipe and enough energy 
-      if ((int)random(2) == 0)
-        // creates a new harvester with 50% chance
-        brain[5].x++;
-      else if ((int)random(2) == 0)
-        // creates a new rocket launcher with 25% chance
-        brain[5].y++;
-      else
-        // creates a new explorer with 25% chance
-        brain[5].z++;
+      // creates a new harvester with 50% chance, a new rocket launcher with 25% chance, a new explorer with 25% chance
+      if ((int)random(2) == 0) brain[5].x++; 
+      else if ((int)random(2) == 0) brain[5].y++;
+      else brain[5].z++;
     }
 
     // creates new bullets and fafs if the stock is low and enought energy
-    if ((bullets < 10) && (energy > 1000))
-      newBullets(50);
-    if ((bullets < 10) && (energy > 1000))
-      newFafs(10);
+    if ((bullets < 10) && (energy > 1000)) newBullets(50); 
+    if ((bullets < 10) && (energy > 1000)) newFafs(10);
 
     // if ennemy rocket launcher in the area of perception
     Robot bob = (Robot)minDist(perceiveRobots(ennemy, LAUNCHER));
     if (bob != null) {
       heading = towards(bob);
       // launch a faf if no friend robot on the trajectory...
-      if (perceiveRobotsInCone(friend, heading) == null)
-        launchFaf(bob);
+      if (perceiveRobotsInCone(friend, heading) == null) launchFaf(bob);
     }
   }
 
@@ -119,19 +107,18 @@ class GreenBase extends Base implements GreenRobot {
       if (msg.type == ASK_FOR_ENERGY) {
         // if the message is a request for energy
         if (energy > 1000 + msg.args[0]) {
-          // gives the requested amount of energy only if at least 1000 units of energy left after
-          giveEnergy(msg.alice, msg.args[0]);
+          giveEnergy(msg.alice, msg.args[0]); // gives the requested amount of energy only if at least 1000 units of energy left after
         }
-      } else if (msg.type == ASK_FOR_BULLETS) {
+      } 
+      else if (msg.type == ASK_FOR_BULLETS) {
         // if the message is a request for energy
         if (energy > 1000 + msg.args[0] * bulletCost) {
-          // gives the requested amount of bullets only if at least 1000 units of energy left after
-          giveBullets(msg.alice, msg.args[0]);
+          giveBullets(msg.alice, msg.args[0]); // gives the requested amount of bullets only if at least 1000 units of energy left after
         }
       }
     }
-    // clear the message queue
-    flushMessages();
+
+    flushMessages(); // clear the message queue
   }
 }
 
@@ -170,34 +157,24 @@ class GreenExplorer extends Explorer implements GreenRobot {
   // > defines the behavior of the agent
   //
   void go() {
-    // if food to deposit or too few energy
-    if ((carryingFood > 200) || (energy < 100))
-      // time to go back to base
-      brain[4].x = 1;
+    
+    if ((carryingFood > 200) || (energy < 100)) brain[4].x = 1; // if food to deposit or too few energy then time to go back to base
 
     // depending on the state of the robot
-    if (brain[4].x == 1) {
-      // go back to base...
-      goBackToBase();
-    } else {
-      // ...or explore randomly
-      // randomly computes the new heading
-      heading += random(-radians(45), radians(45));
-      // if the environment is free ahead of the robot
-      if (freeAhead(speed, collisionAngle))
-        // move forward at full speed
-        forward(speed);
+    if (brain[4].x == 1) { 
+      goBackToBase(); // go back to base...
+    } 
+    else {
+      // or else explore randomly
+      heading += random(-radians(45), radians(45)); // randomly computes the new heading
+      if (freeAhead(speed, collisionAngle)) forward(speed); // if the environment is free ahead of the robot then move forward at full speed
     }
 
-    // tries to localize ennemy bases
-    lookForEnnemyBase();
-    // inform harvesters about food sources
-    driveHarvesters();
-    // inform rocket launchers about targets
-    driveRocketLaunchers();
+    lookForEnnemyBase(); // tries to localize ennemy bases
+    driveHarvesters(); // inform harvesters about food sources
+    driveRocketLaunchers(); // inform rocket launchers about targets
 
-    // clear the message queue
-    flushMessages();
+    flushMessages(); // clear the message queue
   }
 
   //
@@ -231,18 +208,13 @@ class GreenExplorer extends Explorer implements GreenRobot {
 
       if (dist <= 2) {
         // if I am next to the base
-        if (energy < 500)
-          // if my energy is low, I ask for some more
-          askForEnergy(bob, 1500 - energy);
-        // switch to the exploration state
-        brain[4].x = 0;
-        // make a half turn
-        right(180);
-      } else {
-        // if still away from the base
-        // head towards the base (with some variations)...
+        if (energy < 500) askForEnergy(bob, 1500 - energy); // if my energy is low, I ask for some more
+        brain[4].x = 0; // switch to the exploration state
+        right(180); // make a half turn
+      } 
+      else {
+        // if still away from the base head towards the base (with some variations)and try to move forward 
         heading = towards(bob) + random(-radians(20), radians(20));
-        // ...and try to move forward 
         tryToMoveForward();
       }
     }
@@ -270,11 +242,8 @@ class GreenExplorer extends Explorer implements GreenRobot {
     // look for burgers
     Burger zorg = (Burger)oneOf(perceiveBurgers());
     if (zorg != null) {
-      // if one is seen, look for a friend harvester
-      Harvester harvey = (Harvester)oneOf(perceiveRobots(friend, HARVESTER));
-      if (harvey != null)
-        // if a harvester is seen, send a message to it with the position of food
-        informAboutFood(harvey, zorg.pos);
+      Harvester harvey = (Harvester)oneOf(perceiveRobots(friend, HARVESTER)); // if one is seen, look for a friend harvester
+      if (harvey != null)informAboutFood(harvey, zorg.pos); // if a harvester is seen, send a message to it with the position of food
     }
   }
 
@@ -289,9 +258,7 @@ class GreenExplorer extends Explorer implements GreenRobot {
     if (bob != null) {
       // if one is seen, look for a friend rocket launcher
       RocketLauncher rocky = (RocketLauncher)oneOf(perceiveRobots(friend, LAUNCHER));
-      if (rocky != null)
-        // if a rocket launcher is seen, send a message with the localized ennemy robot
-        informAboutTarget(rocky, bob);
+      if (rocky != null) informAboutTarget(rocky, bob); // if a rocket launcher is seen, send a message with the localized ennemy robot
     }
   }
 
@@ -307,14 +274,8 @@ class GreenExplorer extends Explorer implements GreenRobot {
     if (babe != null) {
       // if one is seen, look for a friend explorer
       Explorer explo = (Explorer)oneOf(perceiveRobots(friend, EXPLORER));
-      if (explo != null)
-        // if one is seen, send a message with the localized ennemy base
-        informAboutTarget(explo, babe);
-      // look for a friend base
-      Base basy = (Base)oneOf(perceiveRobots(friend, BASE));
-      if (basy != null)
-        // if one is seen, send a message with the localized ennemy base
-        informAboutTarget(basy, babe);
+      if (explo != null) informAboutTarget(explo, babe); // if one is seen, send a message with the localized ennemy baseBase basy = (Base)oneOf(perceiveRobots(friend, BASE)); // look for a friend base
+      if (basy != null) informAboutTarget(basy, babe); // if one is seen, send a message with the localized ennemy base
     }
   }
 
@@ -324,13 +285,8 @@ class GreenExplorer extends Explorer implements GreenRobot {
   // > try to move forward after having checked that no obstacle is in front
   //
   void tryToMoveForward() {
-    // if there is an obstacle ahead, rotate randomly
-    if (!freeAhead(speed))
-      right(random(360));
-
-    // if there is no obstacle ahead, move forward at full speed
-    if (freeAhead(speed))
-      forward(speed * 0.1);
+    if (!freeAhead(speed)) right(random(360)); // if there is an obstacle ahead, rotate randomly
+    if (freeAhead(speed)) forward(speed * 0.1); // if there is no obstacle ahead, move forward at full speed
   }
 }
 
@@ -368,39 +324,27 @@ class GreenHarvester extends Harvester implements GreenRobot {
   // > defines the behavior of the agent
   //
   void go() {
-    // handle messages received
-    handleMessages();
-
-    // check for the closest burger
-    Burger b = (Burger)minDist(perceiveBurgers());
-    if ((b != null) && (distance(b) <= 2))
-      // if one is found next to the robot, collect it
-      takeFood(b);
-
-    // if food to deposit or too few energy
-    if ((carryingFood > 200) || (energy < 100))
-      // time to go back to the base
-      brain[4].x = 1;
+    
+    handleMessages(); // handle messages received
+    Burger b = (Burger)minDist(perceiveBurgers()); // check for the closest burger
+    
+    if ((b != null) && (distance(b) <= 2)) takeFood(b); // if one is found next to the robot, collect it
+    if ((carryingFood > 200) || (energy < 100)) brain[4].x = 1; // if food to deposit or too few energy, then it's time to go back to the base
 
     // if in "go back" state
     if (brain[4].x == 1) {
-      // go back to the base
-      goBackToBase();
+      goBackToBase(); // go back to the base
 
-      // if enough energy and food
+      // if the robot enough has energy and food
       if ((energy > 100) && (carryingFood > 100)) {
-        // check for closest base
-        Base bob = (Base)minDist(myBases);
+        Base bob = (Base)minDist(myBases); // check for closest base
         if (bob != null) {
           // if there is one and the harvester is in the sphere of perception of the base
-          if (distance(bob) < basePerception)
-            // plant one burger as a seed to produce new ones
-            plantSeed();
+          if (distance(bob) < basePerception) plantSeed(); // plant one burger as a seed to produce new ones
         }
       }
-    } else
-      // if not in the "go back" state, explore and collect food
-      goAndEat();
+    } 
+    else goAndEat(); // if not in the "go back" state, explore and collect food
   }
 
   //
@@ -414,25 +358,21 @@ class GreenHarvester extends Harvester implements GreenRobot {
     if (bob != null) {
       // if there is one
       float dist = distance(bob);
-      if ((dist > basePerception) && (dist < basePerception + 1))
-        // if at the limit of perception of the base, drops a wall (if it carries some)
-        dropWall();
-
+      if ((dist > basePerception) && (dist < basePerception + 1)) dropWall(); // if at the limit of perception of the base, drops a wall (if it carries some)
+ 
       if (dist <= 2) {
-        // if next to the base, gives the food to the base
-        giveFood(bob, carryingFood);
-        if (energy < 500)
-          // ask for energy if it lacks some
-          askForEnergy(bob, 1500 - energy);
-        // go back to "explore and collect" mode
+        // if next to the base 
+        giveFood(bob, carryingFood); // gives the food to the base
+        
+        if (energy < 500) askForEnergy(bob, 1500 - energy); // ask for energy if it lacks some
+        
+        // go back to "explore and collect" mode and make a half turn
         brain[4].x = 0;
-        // make a half turn
         right(180);
-      } else {
-        // if still away from the base
-        // head towards the base (with some variations)...
+      } 
+      else {
+        // if still away from the base head towards the base (with some variations) and try to move forward
         heading = towards(bob) + random(-radians(20), radians(20));
-        // ...and try to move forward
         tryToMoveForward();
       }
     }
@@ -444,42 +384,35 @@ class GreenHarvester extends Harvester implements GreenRobot {
   // > go explore and collect food
   //
   void goAndEat() {
-    // look for the closest wall
-    Wall wally = (Wall)minDist(perceiveWalls());
-    // look for the closest base
-    Base bob = (Base)minDist(myBases);
+    Wall wally = (Wall)minDist(perceiveWalls()); // look for the closest wall
+    Base bob = (Base)minDist(myBases); // look for the closest base
     if (bob != null) {
       float dist = distance(bob);
-      // if wall seen and not at the limit of perception of the base 
-      if ((wally != null) && ((dist < basePerception - 1) || (dist > basePerception + 2)))
-        // tries to collect the wall
-        takeWall(wally);
+      if ((wally != null) && ((dist < basePerception - 1) || (dist > basePerception + 2))) takeWall(wally); // if wall seen and not at the limit of perception of the base then tries to collect the wall
+      
     }
 
     // look for the closest burger
     Burger zorg = (Burger)minDist(perceiveBurgers());
     if (zorg != null) {
       // if there is one
-      if (distance(zorg) <= 2)
-        // if next to it, collect it
-        takeFood(zorg);
+      if (distance(zorg) <= 2) takeFood(zorg); // if next to it, collect it
       else {
-        // if away from the burger, head towards it...
+        // if away from the burger, head towards it and try to move forward
         heading = towards(zorg) + random(-radians(20), radians(20));
-        // ...and try to move forward
         tryToMoveForward();
       }
-    } else if (brain[4].y == 1) {
+    } 
+    else if (brain[4].y == 1) {
       // if no burger seen but food localized (thank's to a message received)
       if (distance(brain[0]) > 2) {
-        // head towards localized food...
+        // head towards localized food and try to move forward
         heading = towards(brain[0]);
-        // ...and try to move forward
         tryToMoveForward();
-      } else
-        // if the food is reached, clear the corresponding flag
-        brain[4].y = 0;
-    } else {
+      } 
+      else brain[4].y = 0; // if the food is reached, clear the corresponding flag
+    } 
+    else {
       // if no food seen and no food localized, explore randomly
       heading += random(-radians(45), radians(45));
       tryToMoveForward();
@@ -492,13 +425,8 @@ class GreenHarvester extends Harvester implements GreenRobot {
   // > try to move forward after having checked that no obstacle is in front
   //
   void tryToMoveForward() {
-    // if there is an obstacle ahead, rotate randomly
-    if (!freeAhead(speed))
-      right(random(360));
-
-    // if there is no obstacle ahead, move forward at full speed
-    if (freeAhead(speed))
-      forward(speed);
+    if (!freeAhead(speed)) right(random(360)); // if there is an obstacle ahead, rotate randomly
+    if (freeAhead(speed)) forward(speed); // if there is no obstacle ahead, move forward at full speed
   }
 
   //
@@ -522,19 +450,18 @@ class GreenHarvester extends Harvester implements GreenRobot {
         p.x = msg.args[0];
         p.y = msg.args[1];
         if (distance(p) < d) {
-          // if burger closer than closest burger
-          // record the position in the brain
+          // if burger closer than closest burger, record the position in the brain, update the distance of the closest burger and update the corresponding flag
           brain[0].x = p.x;
           brain[0].y = p.y;
-          // update the distance of the closest burger
+          
           d = distance(p);
-          // update the corresponding flag
+          
           brain[4].y = 1;
         }
       }
     }
-    // clear the message queue
-    flushMessages();
+    
+    flushMessages(); // clear the message queue
   }
 }
 
@@ -574,23 +501,17 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
   //
   void go() {
     // if no energy or no bullets
-    if ((energy < 100) || (bullets == 0))
-      // go back to the base
-      brain[4].x = 1;
+    if ((energy < 100) || (bullets == 0)) brain[4].x = 1; // go back to the base
 
     if (brain[4].x == 1) {
       // if in "go back to base" mode
       goBackToBase();
-    } else {
+    } 
+    else {
       // try to find a target
       selectTarget();
-      // if target identified
-      if (target())
-        // shoot on the target
-        launchBullet(towards(brain[0]));
-      else
-        // else explore randomly
-        randomMove(45);
+      if (target()) launchBullet(towards(brain[0])); //if target identified shoot on the target
+      else randomMove(45); // else explore randomly
     }
   }
 
@@ -609,9 +530,8 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
       brain[0].z = bob.breed;
       // locks the target
       brain[4].y = 1;
-    } else
-      // no target found
-      brain[4].y = 0;
+    } 
+    else brain[4].y = 0; // else if no target found
   }
 
   //
@@ -641,17 +561,14 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
 
       if (dist <= 2) {
         // if next to the base
-        if (energy < 500)
-          // if energy low, ask for some energy
-          askForEnergy(bob, 1500 - energy);
-        // go back to "exploration" mode
-        brain[4].x = 0;
-        // make a half turn
+        if (energy < 500) askForEnergy(bob, 1500 - energy); // if energy low, ask for some energy
+        
+        brain[4].x = 0;// go back to "exploration" mode and make a half turn
         right(180);
-      } else {
-        // if not next to the base, head towards it... 
+      } 
+      else {
+        // if not next to the base, head towards it and try to move forward 
         heading = towards(bob) + random(-radians(20), radians(20));
-        // ...and try to move forward
         tryToMoveForward();
       }
     }
@@ -663,12 +580,7 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
   // > try to move forward after having checked that no obstacle is in front
   //
   void tryToMoveForward() {
-    // if there is an obstacle ahead, rotate randomly
-    if (!freeAhead(speed))
-      right(random(360));
-
-    // if there is no obstacle ahead, move forward at full speed
-    if (freeAhead(speed))
-      forward(speed);
+    if (!freeAhead(speed)) right(random(360)); // if there is an obstacle ahead, rotate randomly
+    if (freeAhead(speed)) forward(speed); // if there is no obstacle ahead, move forward at full speed
   }
 }
