@@ -57,8 +57,8 @@ class GreenBase extends Base implements GreenRobot {
   // ==
   // > create new robots depending on what ressources we have
   //
-void createNewRobots() {
-  // creates new robots depending on energy and the state of brain[5]
+  void createNewRobots() {
+    // creates new robots depending on energy and the state of brain[5]
     if ((brain[5].x > 0) && (energy >= 1000 + harvesterCost)) {
       // 1st priority = creates harvesters 
       if (newHarvester()) brain[5].x--;
@@ -78,7 +78,7 @@ void createNewRobots() {
       else if ((int)random(2) == 0) brain[5].y++;
       else brain[5].z++;
     }
-}
+  }
 
 
   //
