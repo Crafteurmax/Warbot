@@ -512,6 +512,9 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
   // > defines the behavior of the agent
   //
   void go() {
+    // handle messages received
+    handleMessages();
+    
     // if no energy or no bullets
     if ((energy < 100) || (bullets == 0)) brain[4].x = 1; // go back to the base
 
@@ -594,5 +597,41 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
   void tryToMoveForward() {
     if (!freeAhead(speed)) right(random(360)); // if there is an obstacle ahead, rotate randomly
     if (freeAhead(speed)) forward(speed); // if there is no obstacle ahead, move forward at full speed
+  }
+
+  //
+  // handleMessages
+  // ==============
+  // > handle messages received
+  // > identify the closest localized burger
+  //
+  void handleMessages() {
+    float d = width;
+    PVector p = new PVector();
+
+    Message msg;
+    // for all messages
+    for (int i=0; i<messages.size(); i++) {
+      // get next message
+      msg = messages.get(i);
+      // if "localized target" message
+      if (msg.type == INFORM_ABOUT_TARGET) {
+        // record the position of the target
+        p.x = msg.args[0];
+        p.y = msg.args[1];
+        if (distance(p) < d) {
+          // if target closer than closest target
+          // record the position in the brain
+          brain[0].x = p.x;
+          brain[0].y = p.y;
+          // update the distance of the closest target
+          d = distance(p);
+          // update the corresponding flag
+          brain[4].y = 1;
+        }
+      }
+    }
+    // clear the message queue
+    flushMessages();
   }
 }
