@@ -50,17 +50,15 @@ class GreenBase extends Base implements GreenRobot {
     brain[5].z = 7; // 7 more harvesters to create
   }
 
-  //
-  // go
-  // ==
-  // > called at each iteration of the game
-  // > defines the behavior of the agent
-  //
-  void go() {
-    // handle received messages 
-    handleMessages();
 
-    // creates new robots depending on energy and the state of brain[5]
+  
+  //
+  // createNewRobots
+  // ==
+  // > create new robots depending on what ressources we have
+  //
+void createNewRobots() {
+  // creates new robots depending on energy and the state of brain[5]
     if ((brain[5].x > 0) && (energy >= 1000 + harvesterCost)) {
       // 1st priority = creates harvesters 
       if (newHarvester()) brain[5].x--;
@@ -80,6 +78,19 @@ class GreenBase extends Base implements GreenRobot {
       else if ((int)random(2) == 0) brain[5].y++;
       else brain[5].z++;
     }
+}
+
+
+  //
+  // go
+  // ==
+  // > called at each iteration of the game
+  // > defines the behavior of the agent
+  //
+  void go() {
+    // handle received messages 
+    handleMessages();
+    createNewRobots();
 
     // creates new bullets and fafs if the stock is low and enought energy
     if ((bullets < 10) && (energy > 1000)) newBullets(50); 
@@ -275,6 +286,7 @@ class GreenExplorer extends Explorer implements GreenRobot {
       // if one is seen, look for a friend explorer
       Explorer explo = (Explorer)oneOf(perceiveRobots(friend, EXPLORER));
       if (explo != null) informAboutTarget(explo, babe); // if one is seen, send a message with the localized ennemy baseBase basy = (Base)oneOf(perceiveRobots(friend, BASE)); // look for a friend base
+      Base basy = (Base)oneOf(perceiveRobots(friend, BASE));
       if (basy != null) informAboutTarget(basy, babe); // if one is seen, send a message with the localized ennemy base
     }
   }
