@@ -46,8 +46,10 @@ class GreenBase extends Base implements GreenRobot {
   // > called at the creation of the base
   //
   void setup() {
-    newExplorer(); // creates a new harvester
-    brain[5].z = 7; // 7 more harvesters to create
+    // 6 harvesters, 3 explorers, 2 rockets launchers
+    brain[5].x = 6;
+    brain[5].z = 3;
+    brain[5].y = 2;
   }
 
 
@@ -71,12 +73,15 @@ class GreenBase extends Base implements GreenRobot {
       // 3rd priority = creates explorers 
       if (newExplorer()) brain[5].z--;
     } 
-    else if (energy > 12000) {
-      // if no robot in the pipe and enough energy 
-      // creates a new harvester with 50% chance, a new rocket launcher with 25% chance, a new explorer with 25% chance
-      if ((int)random(2) == 0) brain[5].x++; 
-      else if ((int)random(2) == 0) brain[5].y++;
-      else brain[5].z++;
+    else if(energy>5000){
+        ArrayList<Seed> seeds = perceiveSeeds(friend);
+        ArrayList<Robot> robots = perceiveRobots(friend, HARVESTER);
+        if(seeds!=null && robots!=null){
+          if(seeds.size()>60 && robots.size()>4) newRocketLauncher(); // temps de richesse  donc on crée l'armée
+          else if(seeds.size()<40) newHarvester(); // pas de graine donc on crée des harvester
+          else newExplorer(); // sinon des explo
+        }  
+        newHarvester();
     }
   }
 
@@ -487,6 +492,7 @@ class GreenHarvester extends Harvester implements GreenRobot {
 //   0.z = breed of the target
 //   4.x = (0 = look for target | 1 = go back to base) 
 //   4.y = (0 = no target | 1 = localized target)
+//   4.z = (0 = no request target | 1 = got target request)
 ///////////////////////////////////////////////////////////////////////////
 class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
   //
@@ -514,7 +520,7 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
   void go() {
     // handle messages received
     handleMessages();
-    
+
     // if no energy or no bullets
     if ((energy < 100) || (bullets == 0)) brain[4].x = 1; // go back to the base
 
@@ -522,7 +528,16 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
       // if in "go back to base" mode
       goBackToBase();
     } 
-    else {
+    else if (brain[4].z == 1){
+      // move towards the target
+      heading = towards(brain[0]);
+      tryToMoveForward();
+      if (distance(brain[0]) < 2) {
+        // if next to the target, shoot
+        launchBullet(towards(brain[0]));
+        brain[4].z = 0; // clear the target flag
+      }
+    } else {
       // try to find a target
       selectTarget();
       if (target()) launchBullet(towards(brain[0])); //if target identified shoot on the target
@@ -627,7 +642,7 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
           // update the distance of the closest target
           d = distance(p);
           // update the corresponding flag
-          brain[4].y = 1;
+          brain[4].z = 1;
         }
       }
     }
