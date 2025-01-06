@@ -5,6 +5,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////
 
+
+final int HARVESTER_INFORM_FULL = 1234;
+
+
 class GreenTeam extends Team {
   final int MY_CUSTOM_MSG = 5;
   PVector base1, base2;
@@ -47,9 +51,9 @@ class GreenBase extends Base implements GreenRobot {
   //
   void setup() {
     // 6 harvesters, 3 explorers, 2 rockets launchers
-    brain[5].x = 6;
+    brain[5].x = 3;
     brain[5].z = 3;
-    brain[5].y = 2;
+    brain[5].y = 5;
   }
 
 
@@ -77,11 +81,11 @@ class GreenBase extends Base implements GreenRobot {
         ArrayList<Seed> seeds = perceiveSeeds(friend);
         ArrayList<Robot> robots = perceiveRobots(friend, HARVESTER);
         if(seeds!=null && robots!=null){
-          if(seeds.size()>60 && robots.size()>4) newRocketLauncher(); // temps de richesse  donc on crée l'armée
-          else if(seeds.size()<40) newHarvester(); // pas de graine donc on crée des harvester
-          else newExplorer(); // sinon des explo
+          if(seeds.size()>60 && robots.size()>4) brain[5].y++; // temps de richesse  donc on crée l'armée
+          else if(seeds.size()<40) brain[5].x++; // pas de graine donc on crée des harvester
+          else brain[5].z++; // sinon des explo
         }  
-        newHarvester();
+        //newHarvester();
     }
   }
 
@@ -173,7 +177,8 @@ class GreenExplorer extends Explorer implements GreenRobot {
   // > defines the behavior of the agent
   //
   void go() {
-    
+    handleMessages();
+
     if ((carryingFood > 200) || (energy < 100)) brain[4].x = 1; // if food to deposit or too few energy then time to go back to base
 
     // depending on the state of the robot
@@ -290,9 +295,11 @@ class GreenExplorer extends Explorer implements GreenRobot {
     if (babe != null) {
       // if one is seen, look for a friend explorer
       Explorer explo = (Explorer)oneOf(perceiveRobots(friend, EXPLORER));
-      if (explo != null) informAboutTarget(explo, babe); // if one is seen, send a message with the localized ennemy baseBase basy = (Base)oneOf(perceiveRobots(friend, BASE)); // look for a friend base
+      if (explo != null) informAboutTarget(explo, babe); // if one is seen, send a message with the localized ennemy base
       Base basy = (Base)oneOf(perceiveRobots(friend, BASE));
       if (basy != null) informAboutTarget(basy, babe); // if one is seen, send a message with the localized ennemy base
+      RocketLauncher friendlyRocket = (RocketLauncher)oneOf(perceiveRobots(friend, LAUNCHER));
+      if (friendlyRocket != null) informAboutTarget(friendlyRocket, babe); // if one is seen, send a message with the localized ennemy base
     }
   }
 
@@ -304,6 +311,49 @@ class GreenExplorer extends Explorer implements GreenRobot {
   void tryToMoveForward() {
     if (!freeAhead(speed)) right(random(360)); // if there is an obstacle ahead, rotate randomly
     if (freeAhead(speed)) forward(speed * 0.1); // if there is no obstacle ahead, move forward at full speed
+  }
+
+
+  //
+  // handleMessages
+  // ==============
+  // > handle messages received
+  // > identify the closest localized burger
+  //
+  void handleMessages() {
+
+    Message msg;
+    // for all messages
+    for (int i=0; i<messages.size(); i++) {
+      // get next message
+      msg = messages.get(i);
+      // if "localized full harvester" message
+      if (msg.type == HARVESTER_INFORM_FULL) {
+        brain[0].x = msg.args[0];
+        brain[1].x = msg.args[1];
+        heading = towards(brain[0]);
+        tryToMoveForward();
+
+        Harvester bob = (Harvester)oneOf(perceiveRobots(friend, HARVESTER));
+        askForEnergy(bob, 1500 - energy);
+      }
+      
+    }
+    // clear the message queue
+    flushMessages();
+  }
+
+  void askForEnergy(Robot bob, float qty) {
+    // check that bob is a base and distance is less than max range
+    if ((bob != null) && (distance(bob) < messageRange)) {
+      // build the message...
+      float[] args = new float[1];
+      args[0] = qty;
+      Message msg = new Message(ASK_FOR_ENERGY, who, bob.who, args);
+      // ...and add it to bob's messages queue
+      bob.messages.add(msg);
+      System.out.println("ask for energy sended");
+    }
   }
 }
 
@@ -347,7 +397,7 @@ class GreenHarvester extends Harvester implements GreenRobot {
     
     if ((b != null) && (distance(b) <= 2)) takeFood(b); // if one is found next to the robot, collect it
     if ((carryingFood > 200) || (energy < 100)) brain[4].x = 1; // if food to deposit or too few energy, then it's time to go back to the base
-
+    if (carryingFood > 200) harvesterInformFull();
     // if in "go back" state
     if (brain[4].x == 1) {
       goBackToBase(); // go back to the base
@@ -476,9 +526,32 @@ class GreenHarvester extends Harvester implements GreenRobot {
           brain[4].y = 1;
         }
       }
+      else if (msg.type == ASK_FOR_ENERGY) {
+        System.out.println("ask for energy receive");
+        // if the message is a request for energy
+        if (energy > 1000 + msg.args[0]) {
+          Robot alice = game.getRobot(msg.alice);
+          this.energy -= msg.args[0];
+          alice.energy += msg.args[0];
+          System.out.println(this.who + " give " + msg.args[0] + " to " + alice.who);
+        }
+      } 
     }
     
     flushMessages(); // clear the message queue
+  }
+
+
+  void harvesterInformFull(){
+    Explorer bob = (Explorer)oneOf(perceiveRobots(friend, EXPLORER));
+    // check that bob exists and distance is less than max range
+    if ((bob != null) && (distance(bob) < messageRange)) {
+      // System.out.println("Send Message");
+      float[] args = new float[2];
+      args[0]=pos.x;
+      args[1]=pos.y;
+      sendMessage(bob.who, HARVESTER_INFORM_FULL, args);
+    }
   }
 }
 
