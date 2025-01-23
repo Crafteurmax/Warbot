@@ -1,4 +1,4 @@
-/////////////////////////////////////////////////////////////////////////// //<>// //<>// //<>//
+/////////////////////////////////////////////////////////////////////////// //<>//
 //
 // The code for the green team
 // ===========================
@@ -9,9 +9,9 @@
 final int HARVESTER_INFORM_FULL = 1234;
 final int BASE_ASK_ASSITANT = 2808;
 
-final int numberOfBaseHarvester = 1;
+final int numberOfBaseHarvester = 2;
 final int numberOfSentinel = 0;
-final float maxProtectionDistance = 10 / 1;
+final float maxProtectionDistance = 5 / 1.5;
 
 
 class GreenTeam extends Team {
@@ -56,8 +56,8 @@ class GreenBase extends Base implements GreenRobot {
   //
   void setup() {
     // 6 harvesters, 0 rockets launchers, 5 explorers
-    brain[5].x = 6;
-    brain[5].y = 0;
+    brain[5].x = 4;
+    brain[5].y = 2;
     brain[5].z = 3;
   }
 
@@ -83,28 +83,17 @@ class GreenBase extends Base implements GreenRobot {
       // 3rd priority = creates explorers 
       if (newExplorer()) brain[5].z--;
     } 
-    else if(energy>12000){
+    else if(energy>10000){
         ArrayList<Seed> seeds = perceiveSeeds(friend);
         ArrayList<Burger> burgers = perceiveBurgers();
 
         println("burgers : " + (burgers!=null ? burgers.size() : "0") + " seeds : " + (seeds!=null ? seeds.size() : "0"));
-        if(seeds!=null && burgers!=null && burgers.size()>seeds.size()*0.5f) brain[5].x++; // pas de graine donc on crée des harvester
+        if(burgers!=null && burgers.size()>10) brain[5].x++; // pas de graine donc on crée des harvester
         else if(seeds!=null && seeds.size()>50) brain[5].y++; // temps de richesse  donc on crée l'armée
-        else {
-          if ((int)random(2) == 0)
-            // creates a new harvesterexplorer with 50% chance
-            brain[5].z++;
-          else if ((int)random(2) == 0)
-            // creates a new rocket launcher with 25% chance
-            brain[5].y++;
-          else
-            // creates a new harvester with 25% chance
-            brain[5].x++;
-        }
-    }
+        else brain[5].z++; // sinon des explo
         
         //newHarvester();
-    
+    }
   }
 
 
@@ -121,21 +110,15 @@ class GreenBase extends Base implements GreenRobot {
     DefineHomeAssitants();
 
     // creates new bullets and fafs if the stock is low and enought energy
-    if ((bullets < 10) && (energy > 1000)) newFafs(10);
     if ((bullets < 10) && (energy > 1000)) newBullets(50); 
+    if ((bullets < 10) && (energy > 1000)) newFafs(10);
 
     // if ennemy rocket launcher in the area of perception
     Robot bob = (Robot)minDist(perceiveRobots(ennemy, LAUNCHER));
-    Robot robot = (Robot)minDist(perceiveRobots(ennemy));
     if (bob != null) {
       heading = towards(bob);
       // launch a faf if no friend robot on the trajectory...
-      launchFaf(bob);
-      launchBullet(towards(bob));
-    }
-    else if(robot != null){
-      heading = towards(robot);
-      launchBullet(towards(robot));
+      if (perceiveRobotsInCone(friend, heading) == null) launchFaf(bob);
     }
   }
 
@@ -639,8 +622,6 @@ class GreenHarvester extends Harvester implements GreenRobot {
 //   4.x = (0 = look for target | 1 = go back to base | 2 = is defending the base) 
 //   4.y = (0 = no target | 1 = localized target)
 //   4.z = (0 = no request target | 1 = got target request)
-//   1.xy base position
-//   1.z has base position
 ///////////////////////////////////////////////////////////////////////////
 class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
   //
@@ -676,13 +657,6 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
       // if in "go back to base" mode
       goBackToBase();
     } 
-    else if (brain[1].z == 1) {
-          if(distance(new PVector(brain[1].x,brain[1].y))<5) tryToShoot();
-          else {
-            heading = towards(brain[1]) + random(-radians(20), radians(20));
-            tryToMoveForward();
-          }
-    }
     else if (brain[3].x == 1) {
       Base bob = (Base)minDist(myBases);
       if (bob != null) { 
@@ -702,9 +676,9 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
       // move towards the target
       heading = towards(brain[0]);
       tryToMoveForward();
-      if (distance(brain[0]) < 5) {
+      if (distance(brain[0]) < 2) {
         // if next to the target, shoot
-        tryToShoot();
+        launchBullet(towards(brain[0]));
         brain[4].z = 0; // clear the target flag
       }
     } else {
@@ -822,29 +796,8 @@ class GreenRocketLauncher extends RocketLauncher implements GreenRobot {
 
   void tryToShoot(){
       // try to find a target
-      
-      Base base = (Base)minDist(perceiveRobots(ennemy,BASE));
-      if(base != null){
-        brain[1].x = base.pos.x;
-        brain[1].y = base.pos.y;
-        brain[1].z = 1;
-        launchBullet(towards(base));
-        return;
-      }
-
-      PVector basePose = new PVector(brain[1].x,brain[1].y);
-      if(brain[1].z == 1 && distance(basePose) < 5 && base == null) brain[1].z = 0;
-
-      
       selectTarget();
-      if (target()){
-        Robot bob = (Robot)minDist(perceiveRobots(ennemy)); 
-        if(distance(bob) < 1.0f){
-          right(180);
-          forward(1.0f);
-        }
-        launchBullet(towards(brain[0])); //if target identified shoot on the target
-      } 
+      if (target()) launchBullet(towards(brain[0])); //if target identified shoot on the target
       else randomMove(45); // else explore randomly
   }
 }
