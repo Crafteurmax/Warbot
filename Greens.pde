@@ -11,7 +11,7 @@ final int BASE_ASK_ASSITANT = 2808;
 
 final int numberOfBaseHarvester = 1;
 final int numberOfSentinel = 0;
-final float maxProtectionDistance = 10 / 1;
+final float maxProtectionDistance = 10;
 
 
 class GreenTeam extends Team {
