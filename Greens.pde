@@ -70,7 +70,6 @@ class GreenBase extends Base implements GreenRobot {
   //
   void createNewRobots() {
     // creates new robots depending on energy and the state of brain[5]
-    //println("create : " + brain[5].x + ", " + brain[5].y + ", " + brain[5].z);
     if ((brain[5].x > 0) && (energy >= 1000 + harvesterCost)) {
       // 1st priority = creates harvesters 
       if (newHarvester()) brain[5].x--;
@@ -87,7 +86,6 @@ class GreenBase extends Base implements GreenRobot {
         ArrayList<Seed> seeds = perceiveSeeds(friend);
         ArrayList<Burger> burgers = perceiveBurgers();
 
-        println("burgers : " + (burgers!=null ? burgers.size() : "0") + " seeds : " + (seeds!=null ? seeds.size() : "0"));
         if(seeds!=null && burgers!=null && burgers.size()>seeds.size()*0.5f) brain[5].x++; // pas de graine donc on crée des harvester
         else if(seeds!=null && seeds.size()>50) brain[5].y++; // temps de richesse  donc on crée l'armée
         else {
@@ -98,7 +96,7 @@ class GreenBase extends Base implements GreenRobot {
             // creates a new rocket launcher with 25% chance
             brain[5].y++;
           else
-            // creates a new harvester with 25% chance
+            // creates a new explorer with 25% chance
             brain[5].x++;
         }
     }
@@ -239,7 +237,6 @@ class GreenExplorer extends Explorer implements GreenRobot {
       else 
       {
         heading += radians(45);
-        // println("step bro I'm stuck");
       }
     }
 
@@ -405,7 +402,6 @@ class GreenExplorer extends Explorer implements GreenRobot {
       Message msg = new Message(ASK_FOR_ENERGY, who, bob.who, args);
       // ...and add it to bob's messages queue
       bob.messages.add(msg);
-      // println("ask for energy sended");
     }
   }
 }
@@ -594,13 +590,11 @@ class GreenHarvester extends Harvester implements GreenRobot {
         }
       }
       else if (msg.type == ASK_FOR_ENERGY) {
-        // println("ask for energy receive");
         // if the message is a request for energy
         if (energy > 1000 + msg.args[0]) {
           Robot alice = game.getRobot(msg.alice);
           this.energy -= msg.args[0];
           alice.energy += msg.args[0];
-          // println(this.who + " give " + msg.args[0] + " to " + alice.who);
         }
       }
       else if (msg.type == BASE_ASK_ASSITANT){
@@ -618,7 +612,6 @@ class GreenHarvester extends Harvester implements GreenRobot {
     Explorer bob = (Explorer)oneOf(perceiveRobots(friend, EXPLORER));
     // check that bob exists and distance is less than max range
     if ((bob != null) && (distance(bob) < messageRange)) {
-      // System.out.println("Send Message");
       float[] args = new float[2];
       args[0]=pos.x;
       args[1]=pos.y;
